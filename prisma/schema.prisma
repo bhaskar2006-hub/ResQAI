@@ -1,0 +1,265 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CITIZEN
+  GOVERNMENT
+  NGO
+  ADMIN
+  HOSPITAL
+  VOLUNTEER
+}
+
+enum ResourceType {
+  AMBULANCE
+  FIRE_TRUCK
+  BOAT
+  VOLUNTEER
+}
+
+enum ResourceStatus {
+  AVAILABLE
+  ASSIGNED
+  MAINTENANCE
+}
+
+enum SosStatus {
+  PENDING
+  ASSIGNED
+  RESOLVED
+}
+
+enum ReportType {
+  WEATHER
+  FIRE
+  FLOOD
+  EARTHQUAKE
+  OTHER
+}
+
+enum DisasterSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  password   String
+  name       String
+  role       Role      @default(CITIZEN)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resourceId String?
+  resource   Resource? @relation(fields: [resourceId], references: [id])
+  hospitalId String?
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id])
+
+  sosReports SosReport[]
+  reports    Report[]
+}
+
+model Hospital {
+  id            String   @id @default(uuid())
+  name          String
+  state         String   @default("")
+  district      String   @default("")
+  latitude      Float
+  longitude     Float
+  address       String
+  icuBeds       Int      @default(0)
+  generalBeds   Int      @default(0)
+  capacity      Int
+  availableBeds Int
+  ambulances    Int      @default(0)
+  status        String   @default("Available")
+  contact       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  users         User[]
+}
+
+model Shelter {
+  id        String   @id @default(uuid())
+  name      String
+  district  String   @default("")
+  latitude  Float
+  longitude Float
+  address   String
+  capacity  Int
+  occupancy Int
+  contact   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resource {
+  id              String         @id @default(uuid())
+  type            ResourceType
+  status          ResourceStatus @default(AVAILABLE)
+  identifier      String         @unique
+  latitude        Float
+  longitude       Float
+  assignedToSosId String?
+  assignedToSos   SosReport?     @relation(fields: [assignedToSosId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  users           User[]
+}
+
+model SosReport {
+  id          String    @id @default(uuid())
+  reporterId  String?
+  reporter    User?     @relation(fields: [reporterId], references: [id])
+  latitude    Float
+  longitude   Float
+  status      SosStatus @default(PENDING)
+  description String
+  audioUrl    String?
+  videoUrl    String?
+  imageUrl    String?
+  aiAnalysis  Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  resources Resource[]
+}
+
+model Report {
+  id          String     @id @default(uuid())
+  reporterId  String
+  reporter    User       @relation(fields: [reporterId], references: [id])
+  latitude    Float
+  longitude   Float
+  title       String
+  description String
+  type        ReportType
+  mediaUrls   Json       @default("[]")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Disaster {
+  id          String           @id @default(uuid())
+  name        String
+  type        ReportType
+  severity    DisasterSeverity
+  latitude    Float
+  longitude   Float
+  radius      Float // Impact radius in km/meters
+  description String
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+enum SupplyType {
+  FOOD
+  WATER
+  MEDICINES
+  TENTS
+  BLANKETS
+}
+
+model NGO {
+  id         String   @id @default(uuid())
+  name       String
+  state      String
+  district   String
+  focus      String
+  volunteers Int
+  status     String   @default("Active")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Warehouse {
+  id        String   @id @default(uuid())
+  district  String
+  foodKits  Int
+  water     Int
+  medicine  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GovernmentOffice {
+  id         String   @id @default(uuid())
+  department String
+  district   String
+  officer    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model FireStation {
+  id        String   @id @default(uuid())
+  name      String
+  district  String
+  trucks    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supply {
+  id        String     @id @default(uuid())
+  type      SupplyType
+  district  String
+  quantity  Int
+  status    String     @default("Available")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum AgentType {
+  ALLOCATOR
+  TRANSLATOR
+  FORECASTER
+  SEARCH_AND_RESCUE
+}
+
+enum AgentStatus {
+  ACTIVE
+  IDLE
+  OFFLINE
+}
+
+enum ActionStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTED
+}
+
+model Agent {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  type         AgentType
+  status       AgentStatus @default(ACTIVE)
+  endpointUrl  String?
+  capabilities Json        @default("[]")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  actions AgentAction[]
+}
+
+model AgentAction {
+  id         String       @id @default(uuid())
+  agentId    String
+  agent      Agent        @relation(fields: [agentId], references: [id])
+  actionType String
+  targetId   String?
+  details    Json
+  status     ActionStatus @default(PENDING_APPROVAL)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}

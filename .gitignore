@@ -1,0 +1,41 @@
+# Dependency directories
+node_modules/
+
+# Local media uploads storage
+storage/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.code-review-graph/
+
+# Agent & AI Editor configs
+.agents/
+.claude/
+.cursor/
+.cursorrules
+.gemini/
+.kiro/
+.mcp.json
+.opencode.json
+.qoder/
+.windsurfrules
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+QODER.md
+skills-lock.json
